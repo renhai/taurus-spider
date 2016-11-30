@@ -36,7 +36,14 @@ public class RottenTomatoesProcessor implements PageProcessor {
 	public void process(Page page) {
 		if (page.getUrl().get().matches(".*/m/[^/]+/?$")) {
 			torturePage(page);
-		} else {
+		} 
+//		else if (page.getUrl().get().matches(".*/celebrity/[^/]+/?$")) {
+//			page.putField("link", page.getUrl().get());
+//			page.putField("actorId", page.getHtml().$("meta[name=actorID]", "content").get());
+//			page.putField("birthday", page.getHtml().xpath("//td[@itemprop='birthDate']/text()").get());
+//			page.putField("birthplace", page.getHtml().xpath("//td[@itemprop='birthPlace']/text()").get());
+//		} 
+		else {
 			page.setSkip(true);
 		}
 		if (page.getStatusCode() == HttpStatus.OK.value()) {
