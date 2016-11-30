@@ -1,6 +1,7 @@
 package me.renhai.taurus.spider;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -16,9 +17,11 @@ public class TaurusSpiderRunner implements CommandLineRunner {
 	@Autowired
 	private ApplicationContext context;
 	
+	@Value("${movie.json.data.store.path}")
+	private String path;
+	
 	@Override
 	public void run(String... args) throws Exception {
-		String path = "/Users/andy/Downloads";
 		Spider.create(new RottenTomatoesProcessor())
 		   .addUrl("https://www.rottentomatoes.com/")
 		   .addPipeline(new JsonFilePipeline(path))
@@ -27,7 +30,5 @@ public class TaurusSpiderRunner implements CommandLineRunner {
 		   .start();
 		
 	}
-	
-
 
 }

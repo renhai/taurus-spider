@@ -2,7 +2,6 @@ package me.renhai.taurus.spider.rottentomatoes;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -11,13 +10,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSONObject;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.ReadContext;
 
-import me.renhai.taurus.spider.rottentomatoes.RTCast;
-import me.renhai.taurus.spider.rottentomatoes.RTRating;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.selector.HtmlNode;
 import us.codecraft.webmagic.selector.Selectable;
@@ -55,16 +53,20 @@ public class RottenTomatoesTorturer {
 	}
 	
 	private static void processRating(Page page, ReadContext ctx) {
-		RTRating res = new RTRating();
+//		RTRating res = new RTRating();
+		JSONObject json = new JSONObject();
 		NumberFormat nf = NumberFormat.getInstance(Locale.US);
-		res.setCriticRatingValue(ctx.read("$.aggregateRating.ratingValue"));
-		res.setCriticReviewsCounted(ctx.read("$.aggregateRating.reviewCount"));
+//		res.setCriticRatingValue(ctx.read("$.aggregateRating.ratingValue"));
+//		res.setCriticReviewsCounted(ctx.read("$.aggregateRating.reviewCount"));
+		json.put("criticRatingValue", ctx.read("$.aggregateRating.ratingValue"));
+		json.put("criticReviewsCounted", ctx.read("$.aggregateRating.reviewCount"));
 		
 		Selectable scoreStats = page.getHtml().xpath("//div[@id='scoreStats']");
 		String criticFresh = scoreStats.$("span:containsOwn(Fresh:) + span", "text").get();
 		if (StringUtils.isNotBlank(criticFresh)) {
 			try {
-				res.setCriticFresh(nf.parse(criticFresh).intValue());
+//				res.setCriticFresh(nf.parse(criticFresh).intValue());
+				json.put("criticFresh", nf.parse(criticFresh).intValue());
 			} catch (ParseException e) {
 				LOG.error(e.getMessage());
 			}
@@ -72,7 +74,8 @@ public class RottenTomatoesTorturer {
 		String criticRotten = scoreStats.$("span:containsOwn(Rotten:) + span", "text").get();
 		if (StringUtils.isNotBlank(criticRotten)) {
 			try {
-				res.setCriticRotten(nf.parse(criticRotten).intValue());
+//				res.setCriticRotten(nf.parse(criticRotten).intValue());
+				json.put("criticRotten", nf.parse(criticRotten).intValue());
 			} catch (ParseException e) {
 				LOG.error(e.getMessage());
 			}
@@ -80,52 +83,59 @@ public class RottenTomatoesTorturer {
 
 		String criticAvg = scoreStats.$("div > div:contains(Average Rating:)", "text").get();
 		criticAvg = StringUtils.removeStart(criticAvg, "Average Rating:");
-		res.setCriticAverageRating(StringUtils.trimToNull(criticAvg));
+//		res.setCriticAverageRating(StringUtils.trimToNull(criticAvg));
+		json.put("criticAverageRating", StringUtils.trimToNull(criticAvg));
 		
 		String audienceRate = page.getHtml().$("div#scorePanel a[href*=audience_reviews] div[class*=meter-value] > span", "text").get();
 		if (StringUtils.isNotBlank(audienceRate)) {
-			res.setAudienceRatingValue(Integer.parseInt(StringUtils.removeEnd(StringUtils.trimToEmpty(audienceRate), "%")));
+//			res.setAudienceRatingValue(Integer.parseInt(StringUtils.removeEnd(StringUtils.trimToEmpty(audienceRate), "%")));
+			json.put("audienceRatingValue", Integer.parseInt(StringUtils.removeEnd(StringUtils.trimToEmpty(audienceRate), "%")));
 		}
 
 		String audienceAvg = page.getHtml().$("div[class*=audiencepanel] div[class*=audience-info] > div:contains(Average Rating:)", "text").get();
 		audienceAvg = StringUtils.removeStart(audienceAvg, "Average Rating:");
-		res.setAudienceAverageRating(StringUtils.trimToEmpty(audienceAvg));
+//		res.setAudienceAverageRating(StringUtils.trimToEmpty(audienceAvg));
+		json.put("audienceAverageRating", StringUtils.trimToEmpty(audienceAvg));
 		
 		
 		String audienceUserRating = page.getHtml().$("div[class*=audiencepanel] div[class*=audience-info] > div:contains(User Ratings:)", "text").get();
 		if (StringUtils.isNotBlank(audienceUserRating)) {
 			audienceUserRating = StringUtils.trimToEmpty(StringUtils.removeStart(audienceUserRating, "User Ratings:"));
 			try {
-				res.setAudienceRatingCount(nf.parse(audienceUserRating).intValue());
+//				res.setAudienceRatingCount(nf.parse(audienceUserRating).intValue());
+				json.put("audienceRatingCount", nf.parse(audienceUserRating).intValue());
 			} catch (ParseException e) {
 				LOG.error(e.getMessage());
 			} 
 		}
-		res.setCriticsConsensus(page.getHtml().xpath("//div[@id='all-critics-numbers']//p[@class='critic_consensus superPageFontColor']/allText()").get());
-		page.putField("rating", res);
+//		res.setCriticsConsensus(page.getHtml().xpath("//div[@id='all-critics-numbers']//p[@class='critic_consensus superPageFontColor']/allText()").get());
+		json.put("criticsConsensus", page.getHtml().xpath("//div[@id='all-critics-numbers']//p[@class='critic_consensus superPageFontColor']/allText()").get());
+		page.putField("rating", json);
 	}
 	
 	private static void processCast(Page page, ReadContext ctx) {
-		List<RTCast> res = new ArrayList<>();
+//		List<RTCast> res = new ArrayList<>();
 		@SuppressWarnings("unchecked")
 		List<Map<String, Object>> actors = ctx.read("$.actors", List.class);
 		List<String> characters = ctx.read("$.character");
 		HtmlNode castSection = (HtmlNode)page.getHtml().xpath("//div[@class='castSection']");
 		for (int i = 0; i < actors.size(); i ++) {
-			RTCast cast = new RTCast();
+//			RTCast cast = new RTCast();
 			Map<String, Object> actor = actors.get(i);
-			cast.setName((String)actor.get("name"));
-			cast.setImage((String)actor.get("image"));
-			cast.setLink((String)actor.get("sameAs"));
-			cast.setType((String)actor.get("@type"));
+//			cast.setName((String)actor.get("name"));
+//			cast.setImage((String)actor.get("image"));
+//			cast.setLink((String)actor.get("sameAs"));
+//			cast.setType((String)actor.get("@type"));
 			
 			if (characters.size() == actors.size()) {
-				cast.setCharacters(characters.get(i));
+//				cast.setCharacters(characters.get(i));
+				actor.put("characters", characters.get(i));
 			} else {
-				cast.setCharacters(castSection.$("a:contains(" + cast.getName() + ") + span", "title").get());
+//				cast.setCharacters(castSection.$("a:contains(" + cast.getName() + ") + span", "title").get());
+				actor.put("characters", castSection.$("a:contains(" + (String)actor.get("name") + ") + span", "title").get());
 			}
-			res.add(cast);
+//			res.add(cast);
 		}
-		page.putField("cast", res);
+		page.putField("cast", actors);
 	}
 }

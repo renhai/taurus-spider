@@ -25,9 +25,9 @@ public class TaurusPipline implements Pipeline {
     public void process(ResultItems resultItems, Task task) {
         try {
         	rabbitTemplate.convertAndSend(JSON.toJSON(resultItems.getAll()));
-        	LOG.info("rabbit convertAndSend: " + resultItems.get("link"));
+        	LOG.info("rabbit convert and send: " + resultItems.getRequest().getUrl());
         } catch (Exception e) {
-            LOG.error("rabbit convertAndSend error.", e);
+            LOG.error("rabbit convertAndSend error." + resultItems.getRequest().getUrl(), e);
         }
     }
 }
