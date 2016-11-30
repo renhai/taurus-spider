@@ -26,7 +26,7 @@ public class TaurusSpiderRunner implements CommandLineRunner {
 		   .addUrl("https://www.rottentomatoes.com/")
 		   .addPipeline(new JsonFilePipeline(path))
 		   .addPipeline(new TaurusPipline(context))
-		   .thread(5)
+		   .thread(8)
 		   .start();
 		
 	}
