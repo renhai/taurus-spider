@@ -7,12 +7,12 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import me.renhai.taurus.spider.rottentomatoes.RottenTomatoesProcessor;
-import me.renhai.taurus.spider.rottentomatoes.TaurusPipline;
+import me.renhai.taurus.spider.rottentomatoes.TaurusRabbitMQPipline;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.pipeline.JsonFilePipeline;
 
-@Component
-public class TaurusSpiderRunner implements CommandLineRunner {
+//@Component
+public class TaurusMovieSpiderRunner implements CommandLineRunner {
 	
 	@Autowired
 	private ApplicationContext context;
@@ -25,7 +25,7 @@ public class TaurusSpiderRunner implements CommandLineRunner {
 		Spider.create(new RottenTomatoesProcessor())
 		   .addUrl("https://www.rottentomatoes.com/")
 		   .addPipeline(new JsonFilePipeline(path))
-		   .addPipeline(new TaurusPipline(context))
+		   .addPipeline(new TaurusRabbitMQPipline(context))
 		   .thread(8)
 		   .start();
 		

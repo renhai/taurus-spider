@@ -12,12 +12,12 @@ import us.codecraft.webmagic.Task;
 import us.codecraft.webmagic.pipeline.Pipeline;
 
 
-public class TaurusPipline implements Pipeline {
-	private static final Logger LOG = LoggerFactory.getLogger(TaurusPipline.class);
+public class TaurusRabbitMQPipline implements Pipeline {
+	private static final Logger LOG = LoggerFactory.getLogger(TaurusRabbitMQPipline.class);
 
 	private RabbitTemplate rabbitTemplate;
 	
-	public TaurusPipline(ApplicationContext ctx) {
+	public TaurusRabbitMQPipline(ApplicationContext ctx) {
 		rabbitTemplate = ctx.getBean(RabbitTemplate.class);
 	}
 
