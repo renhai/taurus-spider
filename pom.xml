@@ -45,6 +45,10 @@
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-log4j12</artifactId>
 				</exclusion>
+				<exclusion>
+		    		<groupId>commons-io</groupId>
+		    		<artifactId>commons-io</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -58,12 +62,12 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<!-- webmagic end -->
 		<dependency>
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
 			<version>2.6</version>
 		</dependency>
-		<!-- webmagic end -->
 		<dependency>
 		    <groupId>commons-io</groupId>
 		    <artifactId>commons-io</artifactId>
