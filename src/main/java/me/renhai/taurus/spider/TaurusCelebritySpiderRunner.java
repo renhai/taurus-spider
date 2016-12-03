@@ -51,8 +51,8 @@ public class TaurusCelebritySpiderRunner implements CommandLineRunner {
 		path = StringUtils.removeEnd(path, "/");
 		Iterator<File> iter = FileUtils.iterateFiles(new File(path + "/rottentomatoes.com"), new String[]{"json"}, false);
 		while (iter.hasNext()) {
-			File object = iter.next();
-			String content = FileUtils.readFileToString(object, Charset.defaultCharset());
+			File file = iter.next();
+			String content = FileUtils.readFileToString(file, Charset.defaultCharset());
 			JSONObject json = JSON.parseObject(content);
 			JSONArray list = new JSONArray();
 			if (json.containsKey("author")) {
@@ -65,6 +65,7 @@ public class TaurusCelebritySpiderRunner implements CommandLineRunner {
 				list.addAll(json.getJSONArray("cast"));
 			}
 			 
+			@SuppressWarnings("rawtypes")
 			Iterator listIter = list.iterator();
 			while (listIter.hasNext()) {
 				JSONObject cel = (JSONObject) listIter.next();

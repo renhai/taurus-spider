@@ -46,7 +46,7 @@
 					<artifactId>slf4j-log4j12</artifactId>
 				</exclusion>
 				<exclusion>
-		    		<groupId>commons-io</groupId>
+		    		<groupId>org.apache.commons</groupId>
 		    		<artifactId>commons-io</artifactId>
 				</exclusion>
 			</exclusions>
