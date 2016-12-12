@@ -10,6 +10,7 @@ import me.renhai.taurus.spider.rottentomatoes.RottenTomatoesProcessor;
 import me.renhai.taurus.spider.rottentomatoes.TaurusRabbitMQPipline;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.pipeline.JsonFilePipeline;
+import us.codecraft.webmagic.scheduler.PriorityScheduler;
 
 @Component
 public class TaurusMovieSpiderRunner implements CommandLineRunner {
@@ -24,6 +25,7 @@ public class TaurusMovieSpiderRunner implements CommandLineRunner {
 	public void run(String... args) throws Exception {
 		Spider.create(new RottenTomatoesProcessor())
 		   .addUrl("https://www.rottentomatoes.com/")
+		   .setScheduler(new PriorityScheduler())
 		   .addPipeline(new JsonFilePipeline(path))
 		   .addPipeline(new TaurusRabbitMQPipline(context))
 		   .thread(8)

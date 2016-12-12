@@ -18,6 +18,7 @@ import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.ReadContext;
 
 import us.codecraft.webmagic.Page;
+import us.codecraft.webmagic.Request;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.processor.PageProcessor;
 import us.codecraft.webmagic.selector.HtmlNode;
@@ -53,7 +54,7 @@ public class RottenTomatoesProcessor implements PageProcessor {
 					link = StringUtils.substring(link, 0, index);
 				}
 				link = StringUtils.removeEnd(link, "/");
-				page.addTargetRequest(link);
+				page.addTargetRequest(new Request(link).setPriority(100));
 			}
 			// page.addTargetRequests(page.getHtml().links().regex(".*www\\.rottentomatoes\\.com/.+").all());
 		}
