@@ -11,7 +11,7 @@ import me.renhai.taurus.spider.rottentomatoes.TaurusRabbitMQPipline;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.pipeline.JsonFilePipeline;
 
-//@Component
+@Component
 public class TaurusMovieSpiderRunner implements CommandLineRunner {
 	
 	@Autowired

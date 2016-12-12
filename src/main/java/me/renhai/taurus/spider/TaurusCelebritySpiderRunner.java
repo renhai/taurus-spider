@@ -24,7 +24,7 @@ import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.downloader.Downloader;
 import us.codecraft.webmagic.downloader.HttpClientDownloader;
 
-@Component
+//@Component
 public class TaurusCelebritySpiderRunner implements CommandLineRunner {
 	private static final Logger LOG = LoggerFactory.getLogger(TaurusCelebritySpiderRunner.class);
 
