@@ -26,10 +26,12 @@ public class TaurusMovieSpiderRunner implements CommandLineRunner {
 		Spider.create(new RottenTomatoesProcessor())
 		   .addUrl("https://www.rottentomatoes.com/")
 		   .setScheduler(new PriorityScheduler())
-		   .addPipeline(new JsonFilePipeline(path))
+//		   .addPipeline(new JsonFilePipeline(path))
 		   .addPipeline(new TaurusRabbitMQPipline(context))
 		   .thread(8)
 		   .start();
+//		Spider.create(new RottenTomatoesProcessor())
+//		   .test("https://www.rottentomatoes.com/m/sully", "https://www.rottentomatoes.com/celebrity/tom_hanks");
 		
 	}
 

@@ -2,9 +2,12 @@ package me.renhai.taurus.spider.rottentomatoes;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -26,17 +29,22 @@ import us.codecraft.webmagic.selector.Selectable;
 
 public class RottenTomatoesProcessor implements PageProcessor {
 	private static final Logger LOG = LoggerFactory.getLogger(RottenTomatoesProcessor.class);
-	private static Configuration conf = Configuration.defaultConfiguration().addOptions(Option.DEFAULT_PATH_LEAF_TO_NULL).addOptions(Option.SUPPRESS_EXCEPTIONS);
-
+	private static Configuration conf = Configuration.defaultConfiguration()
+			.addOptions(Option.DEFAULT_PATH_LEAF_TO_NULL).addOptions(Option.SUPPRESS_EXCEPTIONS);
 
 	private Site site = Site.me().setDomain("rottentomatoes.com").setRetryTimes(5).setTimeOut(10000).setSleepTime(2000)
 			.setUserAgent(
 					"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.65 Safari/537.31");
 
+	private static final String MOVIE_REG = ".*/m/[^/]+/?$";
+	private static final String CELEBRITY_REG = ".*/celebrity/[^/]+/?$";
+	
 	@Override
 	public void process(Page page) {
-		if (page.getUrl().get().matches(".*/m/[^/]+/?$")) {
-			torturePage(page);
+		if (page.getUrl().get().matches(MOVIE_REG)) {
+			tortureMoviePage(page);
+		} else if (page.getUrl().get().matches(CELEBRITY_REG)) {
+			tortureCelebrityPage(page);
 		} else {
 			page.setSkip(true);
 		}
@@ -53,8 +61,19 @@ public class RottenTomatoesProcessor implements PageProcessor {
 				if (index != -1) {
 					link = StringUtils.substring(link, 0, index);
 				}
+				index = StringUtils.indexOf(link, "?");
+				if (index != -1) {
+					link = StringUtils.substring(link, 0, index);
+				}
+
 				link = StringUtils.removeEnd(link, "/");
-				page.addTargetRequest(new Request(link).setPriority(100));
+				if (link.matches(MOVIE_REG)) {
+					page.addTargetRequest(new Request(link).setPriority(100));
+				} else if (link.matches(CELEBRITY_REG)) {
+					page.addTargetRequest(new Request(link).setPriority(99));
+				} else {
+					page.addTargetRequest(new Request(link));
+				}
 			}
 			// page.addTargetRequests(page.getHtml().links().regex(".*www\\.rottentomatoes\\.com/.+").all());
 		}
@@ -65,7 +84,22 @@ public class RottenTomatoesProcessor implements PageProcessor {
 		return site;
 	}
 
-	public void torturePage(Page page) {
+	private void tortureCelebrityPage(Page page) {
+		page.putField("link", page.getUrl().toString());
+		page.putField("actorId", page.getHtml().$("meta[name=actorID]", "content").get());
+		page.putField("birthday", page.getHtml().xpath("//td[@itemprop='birthDate']/text()").get());
+		page.putField("birthplace", page.getHtml().xpath("//td[@itemprop='birthPlace']/text()").get());
+		page.putField("image", page.getHtml().xpath("//img[@id='mainImage']/@src").get());
+
+		// String suffix = StringUtils.substring(link,
+		// StringUtils.lastIndexOf(link, "/"));
+		// page = downloader.download(new Request(link + "/biography"),
+		// site.toTask());
+		// page.putField("bio",
+		// page.getHtml().xpath("//div[@id='bio_box']/section[1]/div/html()").get());
+	}
+
+	public void tortureMoviePage(Page page) {
 		String json = page.getHtml().xpath("//script[@id='jsonLdSchema']/html()").get();
 		ReadContext ctx = JsonPath.parse(json, conf);
 		page.putField("movieId", page.getHtml().$("meta[name=movieID]", "content").get());
@@ -77,28 +111,42 @@ public class RottenTomatoesProcessor implements PageProcessor {
 		page.putField("year", ctx.read("$.datePublished"));
 		page.putField("mpaaRating", ctx.read("$.contentRating"));
 		page.putField("image", ctx.read("$.image"));
-		
+
 		page.putField("link", page.getUrl().toString());
 		page.putField("movieSynopsis", page.getHtml().xpath("//div[@id='movieSynopsis']/text()").get());
-		page.putField("inTheaters", page.getHtml().xpath("//div[@class='info']").$("div:containsOwn(In Theaters) + div > time", "datetime").get());
-		page.putField("onDvd", page.getHtml().xpath("//div[@class='info']").$("div:containsOwn(On DVD) + div > time", "datetime").get());
-		page.putField("runTime", page.getHtml().xpath("//div[@class='info']").$("div:containsOwn(Runtime) + div > time", "datetime").get());
+		page.putField("inTheaters", page.getHtml().xpath("//ul[@class='info']")
+				.$("div:containsOwn(In Theaters) + div > time", "datetime").get());
+		page.putField("onDvd", page.getHtml().xpath("//ul[@class='info']")
+				.$("div:containsOwn(On DVD) + div > time", "datetime").get());
+		page.putField("runTime", page.getHtml().xpath("//ul[@class='info']")
+				.$("div:containsOwn(Runtime) + div > time", "datetime").get());
 		page.putField("timestamp", System.currentTimeMillis());
 		processCast(page, ctx);
-		processRating(page, ctx);	
+		processRating(page, ctx);
+
+		List<String> actorLinks = ctx.read("$.actors[*].sameAs");
+		List<String> directorLinks = ctx.read("$.director[*].sameAs");
+		List<String> authorLinks = ctx.read("$.author[*].sameAs");
+		List<String> celebrityLinks = new ArrayList<>();
+		celebrityLinks.addAll(actorLinks);
+		celebrityLinks.addAll(directorLinks);
+		celebrityLinks.addAll(authorLinks);
+		List<String> fullLinks = celebrityLinks.stream().filter(Objects::nonNull)
+				.map(link -> "https://www.rottentomatoes.com" + link).collect(Collectors.toList());
+		page.addTargetRequests(fullLinks, 99);
 	}
-	
+
 	private String joinString(ReadContext ctx, String path) {
 		List<String> names = ctx.read(path);
 		return StringUtils.join(names, ",");
 	}
-	
+
 	private void processRating(Page page, ReadContext ctx) {
 		JSONObject json = new JSONObject();
 		NumberFormat nf = NumberFormat.getInstance(Locale.US);
 		json.put("criticRatingValue", ctx.read("$.aggregateRating.ratingValue"));
 		json.put("criticReviewsCounted", ctx.read("$.aggregateRating.reviewCount"));
-		
+
 		Selectable scoreStats = page.getHtml().xpath("//div[@id='scoreStats']");
 		String criticFresh = scoreStats.$("span:containsOwn(Fresh:) + span", "text").get();
 		if (StringUtils.isNotBlank(criticFresh)) {
@@ -120,41 +168,49 @@ public class RottenTomatoesProcessor implements PageProcessor {
 		String criticAvg = scoreStats.$("div > div:contains(Average Rating:)", "text").get();
 		criticAvg = StringUtils.removeStart(criticAvg, "Average Rating:");
 		json.put("criticAverageRating", StringUtils.trimToNull(criticAvg));
-		
-		String audienceRate = page.getHtml().$("div#scorePanel a[href*=audience_reviews] div[class*=meter-value] > span", "text").get();
+
+		String audienceRate = page.getHtml()
+				.$("div#scorePanel a[href*=audience_reviews] div[class*=meter-value] > span", "text").get();
 		if (StringUtils.isNotBlank(audienceRate)) {
-			json.put("audienceRatingValue", Integer.parseInt(StringUtils.removeEnd(StringUtils.trimToEmpty(audienceRate), "%")));
+			json.put("audienceRatingValue",
+					Integer.parseInt(StringUtils.removeEnd(StringUtils.trimToEmpty(audienceRate), "%")));
 		}
 
-		String audienceAvg = page.getHtml().$("div[class*=audiencepanel] div[class*=audience-info] > div:contains(Average Rating:)", "text").get();
+		String audienceAvg = page.getHtml()
+				.$("div[class*=audience-panel] div[class*=audience-info] > div:contains(Average Rating:)", "text")
+				.get();
 		audienceAvg = StringUtils.removeStart(audienceAvg, "Average Rating:");
 		json.put("audienceAverageRating", StringUtils.trimToEmpty(audienceAvg));
-		
-		
-		String audienceUserRating = page.getHtml().$("div[class*=audiencepanel] div[class*=audience-info] > div:contains(User Ratings:)", "text").get();
+
+		String audienceUserRating = page.getHtml()
+				.$("div[class*=audience-panel] div[class*=audience-info] > div:contains(User Ratings:)", "text").get();
 		if (StringUtils.isNotBlank(audienceUserRating)) {
 			audienceUserRating = StringUtils.trimToEmpty(StringUtils.removeStart(audienceUserRating, "User Ratings:"));
 			try {
 				json.put("audienceRatingCount", nf.parse(audienceUserRating).intValue());
 			} catch (ParseException e) {
 				LOG.error(e.getMessage());
-			} 
+			}
 		}
-		json.put("criticsConsensus", page.getHtml().xpath("//div[@id='all-critics-numbers']//p[@class='critic_consensus superPageFontColor']/allText()").get());
+		json.put("criticsConsensus",
+				page.getHtml()
+						.xpath("//div[@id='all-critics-numbers']//p[@class='critic_consensus superPageFontColor']/allText()")
+						.get());
 		page.putField("rating", json);
 	}
-	
+
 	private void processCast(Page page, ReadContext ctx) {
 		@SuppressWarnings("unchecked")
 		List<Map<String, Object>> actors = ctx.read("$.actors", List.class);
 		List<String> characters = ctx.read("$.character");
-		HtmlNode castSection = (HtmlNode)page.getHtml().xpath("//div[@class='castSection']");
-		for (int i = 0; i < actors.size(); i ++) {
+		HtmlNode castSection = (HtmlNode) page.getHtml().xpath("//div[@class='castSection']");
+		for (int i = 0; i < actors.size(); i++) {
 			Map<String, Object> actor = actors.get(i);
 			if (characters.size() == actors.size()) {
 				actor.put("characters", characters.get(i));
 			} else {
-				actor.put("characters", castSection.$("a:contains(" + (String)actor.get("name") + ") + span", "title").get());
+				actor.put("characters",
+						castSection.$("a:contains(" + (String) actor.get("name") + ") + span", "title").get());
 			}
 		}
 		page.putField("cast", actors);
