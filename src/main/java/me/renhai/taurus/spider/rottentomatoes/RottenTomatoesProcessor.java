@@ -137,7 +137,6 @@ public class RottenTomatoesProcessor implements PageProcessor {
 				.map(link -> "https://www.rottentomatoes.com" + link).collect(Collectors.toList());
 		page.addTargetRequests(fullLinks, 99);
 		List<String> bioLinks = fullLinks.stream().map(link -> link + "/biography").collect(Collectors.toList());
-		LOG.info(bioLinks.toString());
 		page.addTargetRequests(bioLinks, 98);
 	}
 
