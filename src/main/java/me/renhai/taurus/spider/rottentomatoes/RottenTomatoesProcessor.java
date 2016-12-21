@@ -38,7 +38,7 @@ public class RottenTomatoesProcessor implements PageProcessor {
 
 	private static final String MOVIE_REG = ".*/m/[^/]+/?$";
 	private static final String CELEBRITY_REG = ".*/celebrity/[^/]+/?$";
-	private static final String CELEBRITY_BIO_REG = ".*/celebrity/[^/]+/biography/?$";
+//	private static final String CELEBRITY_BIO_REG = ".*/celebrity/[^/]+/biography/?$";
 	
 	@Override
 	public void process(Page page) {
@@ -46,9 +46,11 @@ public class RottenTomatoesProcessor implements PageProcessor {
 			tortureMoviePage(page);
 		} else if (page.getUrl().get().matches(CELEBRITY_REG)) {
 			tortureCelebrityPage(page);
-		} else if (page.getUrl().get().matches(CELEBRITY_BIO_REG)) {
-			tortureCelebrityBioPage(page);
-		} else {
+		} 
+//		else if (page.getUrl().get().matches(CELEBRITY_BIO_REG)) {
+//			tortureCelebrityBioPage(page);
+//		}
+		else {
 			page.setSkip(true);
 		}
 		if (page.getStatusCode() == HttpStatus.OK.value()) {
@@ -74,7 +76,7 @@ public class RottenTomatoesProcessor implements PageProcessor {
 					page.addTargetRequest(new Request(link).setPriority(100));
 				} else if (link.matches(CELEBRITY_REG)) {
 					page.addTargetRequest(new Request(link).setPriority(99));
-					page.addTargetRequest(new Request(link + "/biography").setPriority(97));
+//					page.addTargetRequest(new Request(link + "/biography").setPriority(97));
 				} else {
 					page.addTargetRequest(new Request(link));
 				}
@@ -91,15 +93,16 @@ public class RottenTomatoesProcessor implements PageProcessor {
 	private void tortureCelebrityPage(Page page) {
 		page.putField("link", page.getUrl().toString());
 		page.putField("actorId", page.getHtml().$("meta[name=actorID]", "content").get());
-		page.putField("birthday", page.getHtml().xpath("//td[@itemprop='birthDate']/text()").get());
-		page.putField("birthplace", page.getHtml().xpath("//td[@itemprop='birthPlace']/text()").get());
-		page.putField("image", page.getHtml().xpath("//img[@id='mainImage']/@src").get());
+		page.putField("birthday", page.getHtml().$("td:containsOwn(Birthday) + td > time", "datetime").get());
+		page.putField("birthplace", page.getHtml().$("td:containsOwn(Birthplace) + td", "text").get());
+		page.putField("image", page.getHtml().xpath("//img[@class='posterImage']/@src").get());
+		page.putField("bio", page.getHtml().$("div.celeb_summary_bio", "innerHTML"));
 	}
 	
-	private void tortureCelebrityBioPage(Page page) {
-		page.putField("link", page.getUrl().toString());
-		page.putField("bio", page.getHtml().xpath("//div[@id='bio_box']/section[1]/div/html()").get());
-	}
+//	private void tortureCelebrityBioPage(Page page) {
+//		page.putField("link", page.getUrl().toString());
+//		page.putField("bio", page.getHtml().xpath("//div[@id='bio_box']/section[1]/div/html()").get());
+//	}
 
 	public void tortureMoviePage(Page page) {
 		String json = page.getHtml().xpath("//script[@id='jsonLdSchema']/html()").get();
@@ -136,8 +139,8 @@ public class RottenTomatoesProcessor implements PageProcessor {
 		List<String> fullLinks = celebrityLinks.stream().filter(Objects::nonNull)
 				.map(link -> "https://www.rottentomatoes.com" + link).collect(Collectors.toList());
 		page.addTargetRequests(fullLinks, 99);
-		List<String> bioLinks = fullLinks.stream().map(link -> link + "/biography").collect(Collectors.toList());
-		page.addTargetRequests(bioLinks, 98);
+//		List<String> bioLinks = fullLinks.stream().map(link -> link + "/biography").collect(Collectors.toList());
+//		page.addTargetRequests(bioLinks, 98);
 	}
 
 	private String joinString(ReadContext ctx, String path) {
