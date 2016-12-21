@@ -96,7 +96,7 @@ public class RottenTomatoesProcessor implements PageProcessor {
 		page.putField("birthday", page.getHtml().$("td:containsOwn(Birthday) + td > time", "datetime").get());
 		page.putField("birthplace", page.getHtml().$("td:containsOwn(Birthplace) + td", "text").get());
 		page.putField("image", page.getHtml().xpath("//img[@class='posterImage']/@src").get());
-		page.putField("bio", page.getHtml().$("div.celeb_summary_bio", "innerHTML"));
+		page.putField("bio", page.getHtml().$("div.celeb_summary_bio", "innerHTML").get());
 	}
 	
 //	private void tortureCelebrityBioPage(Page page) {
