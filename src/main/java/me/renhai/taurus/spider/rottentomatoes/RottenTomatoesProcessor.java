@@ -216,8 +216,10 @@ public class RottenTomatoesProcessor implements PageProcessor {
 			if (characters.size() == actors.size()) {
 				actor.put("characters", characters.get(i));
 			} else {
+//				actor.put("characters",
+//						castSection.$("a:contains(" + (String) actor.get("name") + ") + span", "title").get());
 				actor.put("characters",
-						castSection.$("a:contains(" + (String) actor.get("name") + ") + span", "title").get());
+						castSection.$("a[href$=" + StringUtils.trim((String)actor.get("sameAs")) + "] + span", "title").get());
 			}
 		}
 		page.putField("cast", actors);

@@ -29,7 +29,12 @@ public class TaurusMovieSpiderRunner implements CommandLineRunner {
 		   .thread(10)
 		   .start();
 //		Spider.create(new RottenTomatoesProcessor())
-//		   .test("https://www.rottentomatoes.com/m/sully", "https://www.rottentomatoes.com/celebrity/tom_hanks", "https://www.rottentomatoes.com/celebrity/omid_zader");
+//		   .test(
+//				   "https://www.rottentomatoes.com/m/sully",
+//				   "https://www.rottentomatoes.com/celebrity/tom_hanks", 
+//				   "https://www.rottentomatoes.com/celebrity/omid_zader",
+//				   "https://www.rottentomatoes.com/m/ghost-town-gold"
+//				   );
 		
 	}
 
